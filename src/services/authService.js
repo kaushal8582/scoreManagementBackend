@@ -40,15 +40,15 @@ async function registerUser({ firstName, lastName, email, password, category }) 
 }
 
 
-async function test(params) {
-  await registerUser({
-    firstName: "ashish",
-    lastName: "garg",
-    email: "ashish@snabbtech.com",
-    password: "123456",
-    category: "admin"
-  })
-}
+// async function test(params) {
+//   await registerUser({
+//     firstName: "ashish",
+//     lastName: "garg",
+//     email: "ashish@snabbtech.com",
+//     password: "123456",
+//     category: "admin"
+//   })
+// }
 // test()
 
 async function loginUser({ email, password }) {

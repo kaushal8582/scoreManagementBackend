@@ -5,43 +5,47 @@ const User = require('../models/User');
 
 async function getTeamStats() {
   // Aggregate total points per team across all weeks
-  const pipeline = [
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'userId',
-        foreignField: '_id',
-        as: 'user'
-      }
-    },
-    { $unwind: '$user' },
-    {
-      $group: {
-        _id: '$user.teamId',
-        totalPoints: { $sum: '$totalPoints' }
-      }
-    },
-    {
-      $lookup: {
-        from: 'teams',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'team'
-      }
-    },
-    { $unwind: '$team' },
-    {
-      $project: {
-        _id: 0,
-        teamId: '$team._id',
-        teamName: '$team.name',
-        totalPoints: 1
-      }
-    },
-    { $sort: { totalPoints: -1 } }
-  ];
-
-  return UserWeeklyStat.aggregate(pipeline);
+  try {
+    const pipeline = [
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: '$user' },
+      {
+        $group: {
+          _id: '$user.teamId',
+          totalPoints: { $sum: '$totalPoints' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'teams',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'team'
+        }
+      },
+      { $unwind: '$team' },
+      {
+        $project: {
+          _id: 0,
+          teamId: '$team._id',
+          teamName: '$team.name',
+          totalPoints: 1
+        }
+      },
+      { $sort: { totalPoints: -1 } }
+    ];
+  
+    return UserWeeklyStat.aggregate(pipeline);
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function getTopTeams(limit = 3) {
@@ -50,21 +54,22 @@ async function getTopTeams(limit = 3) {
 }
 
 async function getTopPerformers(limit = 3) {
-  const pipeline = [
-    {
-      $group: {
-        _id: '$userId',
-        totalPoints: { $sum: '$totalPoints' }
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'user'
-      }
-    },
+  try {
+    const pipeline = [
+      {
+        $group: {
+          _id: '$userId',
+          totalPoints: { $sum: '$totalPoints' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
     { $unwind: '$user' },
     {
       $lookup: {
@@ -88,27 +93,31 @@ async function getTopPerformers(limit = 3) {
     { $limit: limit }
   ];
 
-  return UserWeeklyStat.aggregate(pipeline);
+    return UserWeeklyStat.aggregate(pipeline);
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function getTeamStatsByWeek() {
   // Useful for charts: points grouped by team and week
-  const pipeline = [
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'userId',
-        foreignField: '_id',
-        as: 'user'
-      }
-    },
-    { $unwind: '$user' },
-    {
-      $lookup: {
-        from: 'teams',
-        localField: 'user.teamId',
-        foreignField: '_id',
-        as: 'team'
+  try {
+    const pipeline = [
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: '$user' },
+      {
+        $lookup: {
+          from: 'teams',
+          localField: 'user.teamId',
+          foreignField: '_id',
+          as: 'team'
       }
     },
     { $unwind: '$team' },
@@ -143,29 +152,33 @@ async function getTeamStatsByWeek() {
     { $sort: { weekStartDate: 1, teamName: 1 } }
   ];
 
-  return UserWeeklyStat.aggregate(pipeline);
+    return UserWeeklyStat.aggregate(pipeline);
+  } catch (error) {
+    throw error;
+  }
 }
 
 // Aggregate total points per user across all weeks
 async function getUserTotals() {
-  const pipeline = [
-    {
-      $group: {
-        _id: '$userId',
-        totalPoints: { $sum: '$totalPoints' }
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'user'
-      }
-    },
-    { $unwind: '$user' },
-    {
-      $lookup: {
+  try {
+    const pipeline = [
+      {
+        $group: {
+          _id: '$userId',
+          totalPoints: { $sum: '$totalPoints' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: '$user' },
+      {
+        $lookup: {  
         from: 'teams',
         localField: 'user.teamId',
         foreignField: '_id',
@@ -185,7 +198,10 @@ async function getUserTotals() {
     { $sort: { totalPoints: -1 } }
   ];
 
-  return UserWeeklyStat.aggregate(pipeline);
+    return UserWeeklyStat.aggregate(pipeline);
+  } catch (error) {
+    throw error;
+  }
 }
 
 module.exports = {

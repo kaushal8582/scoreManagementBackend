@@ -13,83 +13,92 @@ const { getWeekRange } = require('../utils/weekUtils');
  * - Returns summary with created stats count and skipped rows
  */
 async function uploadWeeklyReport(fileBuffer, originalName) {
-  const uploadDate = new Date();
-  const { weekStartDate, weekEndDate } = getWeekRange(uploadDate);
-
-  // Overwrite logic: remove existing report for this week
-  const existingWeek = await WeeklyReport.findOne({ weekStartDate, weekEndDate });
-  if (existingWeek) {
-    await UserWeeklyStat.deleteMany({ weekId: existingWeek._id });
-    await WeeklyReport.deleteOne({ _id: existingWeek._id });
-  }
-
-  const week = await WeeklyReport.create({
-    weekStartDate,
-    weekEndDate,
-    uploadedAt: uploadDate
-  });
-
-  const rows = parseFileToRows(fileBuffer, originalName);
-  const skipped = [];
-  let created = 0;
-
-  for (const row of rows) {
-    const firstName = (row['First Name'] || row.firstName || '').trim();
-    const lastName = (row['Last Name'] || row.lastName || '').trim();
-    if (!firstName || !lastName) {
-      skipped.push({ row, reason: 'Missing firstName or lastName' });
-      continue;
-    }
-
-    const fullName = `${firstName} ${lastName}`;
-    const user = await User.findOne({ fullName });
-    if (!user) {
-      skipped.push({ row, reason: 'User not found' });
-      continue;
-    }
-
-    const metrics = {
-      P: Number(row.P || 0),
-      A: Number(row.A || 0),
-      L: Number(row.L || 0),
-      M: Number(row.M || 0),
-      S: Number(row.S || 0),
-      RGI: Number(row.RGI || 0),
-      RGO: Number(row.RGO || 0),
-      RRI: Number(row.RRI || 0),
-      RRO: Number(row.RRO || 0),
-      V: Number(row.V || 0),
-      oneToOne: Number(row['1-2-1'] || row.oneToOne || 0),
-      CEU: Number(row.CEU || 0),
-      T: Number(row.T || 0),
-      TYFCB_amount: Number(row.TYFCB || row.TYFCB_amount || 0)
-    };
-
-    const totalPoints = calculateTotalPoints(metrics);
-
-    await UserWeeklyStat.create({
-      userId: user._id,
-      weekId: week._id,
-      ...metrics,
-      totalPoints
-    });
-    created += 1;
-  }
-
-  return {
-    week,
-    created,
-    skipped
-  };
+ try {
+   const uploadDate = new Date();
+   const { weekStartDate, weekEndDate } = getWeekRange(uploadDate);
+ 
+   // Overwrite logic: remove existing report for this week
+   const existingWeek = await WeeklyReport.findOne({ weekStartDate, weekEndDate });
+   if (existingWeek) {
+     await UserWeeklyStat.deleteMany({ weekId: existingWeek._id });
+     await WeeklyReport.deleteOne({ _id: existingWeek._id });
+   }
+ 
+   const week = await WeeklyReport.create({
+     weekStartDate,
+     weekEndDate,
+     uploadedAt: uploadDate
+   });
+ 
+   const rows = parseFileToRows(fileBuffer, originalName);
+   const skipped = [];
+   let created = 0;
+ 
+   for (const row of rows) {
+     const firstName = (row['First Name'] || row.firstName || '').trim();
+     const lastName = (row['Last Name'] || row.lastName || '').trim();
+     if (!firstName || !lastName) {
+       skipped.push({ row, reason: 'Missing firstName or lastName' });
+       continue;
+     }
+ 
+     const fullName = `${firstName} ${lastName}`;
+     const user = await User.findOne({ fullName });
+     if (!user) {
+       skipped.push({ row, reason: 'User not found' });
+       continue;
+     }
+ 
+     const metrics = {
+       P: Number(row.P || 0),
+       A: Number(row.A || 0),
+       L: Number(row.L || 0),
+       M: Number(row.M || 0),
+       S: Number(row.S || 0),
+       RGI: Number(row.RGI || 0),
+       RGO: Number(row.RGO || 0),
+       RRI: Number(row.RRI || 0),
+       RRO: Number(row.RRO || 0),
+       V: Number(row.V || 0),
+       oneToOne: Number(row['1-2-1'] || row.oneToOne || 0),
+       CEU: Number(row.CEU || 0),
+       T: Number(row.T || 0),
+       TYFCB_amount: Number(row.TYFCB || row.TYFCB_amount || 0)
+     };
+ 
+     const totalPoints = calculateTotalPoints(metrics);
+ 
+     await UserWeeklyStat.create({
+       userId: user._id,
+       weekId: week._id,
+       ...metrics,
+       totalPoints
+     });
+     created += 1;
+   }
+ 
+   return {
+     week,
+     created,
+     skipped
+   };
+ } catch (error) {
+   throw error;
+ }
 }
 
 async function getWeeklyReports() {
-  const reports = await WeeklyReport.find().sort({ weekStartDate: -1 });
-  return reports;
+  try {
+    const reports = await WeeklyReport.find().sort({ weekStartDate: -1 });
+    return reports;
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function getMonthlyReports() {
-  // Aggregate stats per month (based on weekStartDate)
+  try {
+    // Aggregate stats per month (based on weekStartDate)
   const pipeline = [
     {
       $lookup: {
@@ -115,6 +124,9 @@ async function getMonthlyReports() {
   ];
 
   return WeeklyReport.aggregate(pipeline);
+  } catch (error) {
+    throw error;
+  }
 }
 
 /**
@@ -122,20 +134,26 @@ async function getMonthlyReports() {
  * Returns a summary of deleted counts.
  */
 async function deleteWeeklyReport(weekId) {
-  const week = await WeeklyReport.findById(weekId);
-  if (!week) {
-    const error = new Error('Weekly report not found');
-    error.statusCode = 404;
+  
+  try {
+    const week = await WeeklyReport.findById(weekId);
+    if (!week) {
+      const error = new Error('Weekly report not found');
+      error.statusCode = 404;
+      throw error;
+    }
+  
+    const statsDelete = await UserWeeklyStat.deleteMany({ weekId });
+    await WeeklyReport.deleteOne({ _id: weekId });
+  
+    return {
+      deletedWeekId: weekId,
+      deletedStats: statsDelete?.deletedCount ?? 0
+    };
+    
+  } catch (error) {
     throw error;
   }
-
-  const statsDelete = await UserWeeklyStat.deleteMany({ weekId });
-  await WeeklyReport.deleteOne({ _id: weekId });
-
-  return {
-    deletedWeekId: weekId,
-    deletedStats: statsDelete?.deletedCount ?? 0
-  };
 }
 
 module.exports = {

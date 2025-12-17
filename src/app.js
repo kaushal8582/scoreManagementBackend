@@ -31,8 +31,12 @@ app.use('/api/dashboard', dashboardRoutes);
 
 // Schedule a cron job to hit the /health endpoint every 5 minutes
 cron.schedule('*/1 * * * *', async () => {
-  const res = await http.get('http://localhost:3220/health');
-  console.log(`Health check: ${res.statusCode}`);
+  try {
+    const res = await http.get('http://localhost:3220/health');
+    console.log(`Health check: ${res.statusCode}`);
+  } catch (error) {
+    console.error('Health check failed:', error);
+  }
 });
 
 

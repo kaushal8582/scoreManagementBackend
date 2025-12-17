@@ -7,11 +7,12 @@ const {
 
 async function uploadWeeklyReportController(req, res) {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'File is required' });
+    const files = Array.isArray(req.files) ? req.files : [];
+    if (!files || files.length === 0) {
+      return res.status(400).json({ message: 'At least one CSV file is required' });
     }
-    const { buffer, originalname } = req.file;
-    const result = await uploadWeeklyReport(buffer, originalname);
+    const { weekStartDate, weekEndDate } = req.body || {};
+    const result = await uploadWeeklyReport(files, weekStartDate, weekEndDate);
     return res.status(201).json(result);
   } catch (err) {
     return res
@@ -41,14 +42,6 @@ async function getMonthlyReportsController(req, res) {
       .json({ message: err.message || 'Internal server error' });
   }
 }
-
-module.exports = {
-  uploadWeeklyReportController,
-  getWeeklyReportsController,
-  getMonthlyReportsController,
-  deleteWeeklyReportController
-};
-
 async function deleteWeeklyReportController(req, res) {
   try {
     const { id } = req.params;
@@ -60,5 +53,12 @@ async function deleteWeeklyReportController(req, res) {
       .json({ message: err.message || 'Internal server error' });
   }
 }
+
+module.exports = {
+  uploadWeeklyReportController,
+  getWeeklyReportsController,
+  getMonthlyReportsController,
+  deleteWeeklyReportController
+};
 
 

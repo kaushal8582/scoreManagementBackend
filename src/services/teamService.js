@@ -1,7 +1,7 @@
 const Team = require('../models/Team');
 const User = require('../models/User');
 
-async function createTeam({ name, userIds = [] }) {
+async function createTeam({ name, userIds = [], captainUserId = null }) {
   try {
     
     const existing = await Team.findOne({ name });
@@ -11,7 +11,7 @@ async function createTeam({ name, userIds = [] }) {
       throw error;
     }
   
-    const team = await Team.create({ name, users: userIds });
+  const team = await Team.create({ name, users: userIds, captainUserId });
   
     if (userIds.length > 0) {
       await User.updateMany(
@@ -28,13 +28,15 @@ async function createTeam({ name, userIds = [] }) {
 
 async function listTeams() {
   try {
-    return Team.find().populate('users', 'firstName lastName fullName category');
+    return Team.find()
+      .populate('users', 'firstName lastName fullName category')
+      .populate('captainUserId', 'firstName lastName fullName');
   } catch (error) {
     throw error;
   }
 }
 
-async function updateTeam(id, { name, userIds }) {
+async function updateTeam(id, { name, userIds, captainUserId }) {
   try {
     
     const team = await Team.findById(id);
@@ -54,7 +56,7 @@ async function updateTeam(id, { name, userIds }) {
       team.name = name;
     }
   
-    if (Array.isArray(userIds)) {
+  if (Array.isArray(userIds)) {
       // Clear teamId from users that are no longer in this team
       await User.updateMany(
         { teamId: team._id, _id: { $nin: userIds } },
@@ -70,8 +72,13 @@ async function updateTeam(id, { name, userIds }) {
       team.users = userIds;
     }
   
-    await team.save();
-    return team.populate('users', 'firstName lastName fullName category');
+    // console.log("captainUserId", captainUserId);
+  if ( captainUserId ) {
+    team.captainUserId = captainUserId || null;
+  }
+  
+  await team.save();
+  return team;
   } catch (error) {
     throw error;
   }

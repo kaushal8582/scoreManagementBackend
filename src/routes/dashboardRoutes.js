@@ -4,7 +4,7 @@ const {
   getTeamStatsController,
   getTopTeamsController,
   getTopPerformersController,
-  getUserTotalsController
+  getUserTotalsController,
 } = require('../controllers/dashboardController');
 
 const router = express.Router();

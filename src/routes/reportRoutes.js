@@ -14,7 +14,7 @@ const upload = multer();
 router.post(
   '/upload-weekly',
   authMiddleware,
-  upload.single('file'),
+  upload.array('files'),
   uploadWeeklyReportController
 );
 router.get('/weekly', authMiddleware, getWeeklyReportsController);

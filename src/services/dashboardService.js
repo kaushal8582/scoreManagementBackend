@@ -50,7 +50,19 @@ async function getTeamStats() {
 
 async function getTopTeams(limit = 3) {
   const stats = await getTeamStats();
-  return stats.slice(0, limit);
+  const top = stats.slice(0, limit);
+  // Enrich with captain name if available
+  const enriched = [];
+  for (const s of top) {
+    const team = await Team.findById(s.teamId).populate('captainUserId', 'fullName');
+    enriched.push({
+      teamId: s.teamId,
+      teamName: s.teamName,
+      totalPoints: s.totalPoints,
+      captainFullName: team?.captainUserId?.fullName || null
+    });
+  }
+  return enriched;
 }
 
 async function getTopPerformers(limit = 3) {

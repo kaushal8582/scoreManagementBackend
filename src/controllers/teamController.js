@@ -1,12 +1,12 @@
-const { createTeam, listTeams, updateTeam, deleteTeam } = require('../services/teamService');
+const { createTeam, listTeams, updateTeam } = require('../services/teamService');
 
 async function createTeamController(req, res) {
   try {
-    const { name, userIds } = req.body;
+    const { name, userIds, captainUserId } = req.body;
     if (!name) {
       return res.status(400).json({ message: 'Team name is required' });
     }
-    const team = await createTeam({ name, userIds });
+    const team = await createTeam({ name, userIds, captainUserId });
     return res.status(201).json(team);
   } catch (err) {
     return res
@@ -28,22 +28,12 @@ async function getTeamsController(req, res) {
 
 async function updateTeamController(req, res) {
   try {
-    const { id } = req.params;
-    const { name, userIds } = req.body;
-    const team = await updateTeam(id, { name, userIds });
-    return res.json(team);
-  } catch (err) {
-    return res
-      .status(err.statusCode || 500)
-      .json({ message: err.message || 'Internal server error' });
-  }
-}
 
-async function deleteTeamController(req, res) {
-  try {
     const { id } = req.params;
-    const result = await deleteTeam(id);
-    return res.json(result);
+    const { name, userIds, captainUserId } = req.body;
+    console.log("captainUserId", captainUserId);
+    const team = await updateTeam(id, { name, userIds, captainUserId });
+    return res.json(team);
   } catch (err) {
     return res
       .status(err.statusCode || 500)
@@ -54,8 +44,7 @@ async function deleteTeamController(req, res) {
 module.exports = {
   createTeamController,
   getTeamsController,
-  updateTeamController,
-  deleteTeamController
+  updateTeamController
 };
 
 

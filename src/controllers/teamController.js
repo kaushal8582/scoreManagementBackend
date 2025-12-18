@@ -1,4 +1,4 @@
-const { createTeam, listTeams, updateTeam } = require('../services/teamService');
+const { createTeam, listTeams, updateTeam,deleteTeam } = require('../services/teamService');
 
 async function createTeamController(req, res) {
   try {
@@ -41,10 +41,23 @@ async function updateTeamController(req, res) {
   }
 }
 
+async function deleteTeamController(req, res) {
+  try {
+    const { id } = req.params;
+    await deleteTeam(id);
+    return res.status(200).json({ message: 'Team deleted successfully' });
+  } catch (err) {
+    return res
+      .status(err.statusCode || 500)
+      .json({ message: err.message || 'Internal server error' });
+  }
+}
+
 module.exports = {
   createTeamController,
   getTeamsController,
-  updateTeamController
+  updateTeamController,
+  deleteTeamController
 };
 
 

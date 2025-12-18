@@ -6,41 +6,46 @@ const { calculateTotalPoints } = require('../utils/pointsCalculator');
 const { getWeekRange } = require('../utils/weekUtils');
 
 /**
- * Upload and process a weekly report file.
- * - Week is based on upload date
- * - If week exists, delete old WeeklyReport + associated UserWeeklyStat rows
- * - Skip rows for users that don't exist
- * - Returns summary with created stats count and skipped rows
+ * Upload and process weekly report files (CSV/XLS/XLSX).
+ * - Supports multiple files in one request.
+ * - Uses provided weekStartDate/weekEndDate if given; else computes from upload date.
+ * - Overwrites existing report for the week (removes old stats + report).
+ * - Upserts per user per week, aggregating metrics across multiple files.
  */
-async function uploadWeeklyReport(files, explicitWeekStartDate, explicitWeekEndDate) {
+async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
   try {
     const uploadDate = new Date();
     let weekStartDate;
     let weekEndDate;
-    if (explicitWeekStartDate && explicitWeekEndDate) {
-      weekStartDate = new Date(explicitWeekStartDate);
-      weekEndDate = new Date(explicitWeekEndDate);
+
+    if (weekStartDateInput && weekEndDateInput) {
+      weekStartDate = new Date(weekStartDateInput);
+      weekEndDate = new Date(weekEndDateInput);
     } else {
       const range = getWeekRange(uploadDate);
       weekStartDate = range.weekStartDate;
       weekEndDate = range.weekEndDate;
     }
 
-    // Find or create WeeklyReport for this week (do not delete existing stats)
-    let week = await WeeklyReport.findOne({ weekStartDate, weekEndDate });
-    if (!week) {
-      week = await WeeklyReport.create({
-        weekStartDate,
-        weekEndDate,
-        uploadedAt: uploadDate
-      });
+    // Overwrite logic: ensure a clean slate for the target week
+    const existingWeek = await WeeklyReport.findOne({ weekStartDate, weekEndDate });
+    if (existingWeek) {
+      await UserWeeklyStat.deleteMany({ weekId: existingWeek._id });
+      await WeeklyReport.deleteOne({ _id: existingWeek._id });
     }
 
-    const skipped = [];
-    let processed = 0;
+    const week = await WeeklyReport.create({
+      weekStartDate,
+      weekEndDate,
+      uploadedAt: uploadDate
+    });
 
-    for (const file of files) {
-      const rows = parseFileToRows(file.buffer, file.originalname);
+    const skipped = [];
+    let processedRows = 0;
+
+    const fileList = Array.isArray(files) ? files : [];
+    for (const f of fileList) {
+      const rows = parseFileToRows(f.buffer, f.originalname || 'upload');
       for (const row of rows) {
         const firstName = (row['First Name'] || row.firstName || '').trim();
         const lastName = (row['Last Name'] || row.lastName || '').trim();
@@ -73,39 +78,46 @@ async function uploadWeeklyReport(files, explicitWeekStartDate, explicitWeekEndD
           TYFCB_amount: Number(row.TYFCB || row.TYFCB_amount || 0)
         };
 
-        const totalPoints = calculateTotalPoints(metrics);
+        // Upsert: aggregate metrics per user for the week
+        const existingStat = await UserWeeklyStat.findOne({ userId: user._id, weekId: week._id });
+        const aggregated = {
+          P: (existingStat?.P || 0) + metrics.P,
+          A: (existingStat?.A || 0) + metrics.A,
+          L: (existingStat?.L || 0) + metrics.L,
+          M: (existingStat?.M || 0) + metrics.M,
+          S: (existingStat?.S || 0) + metrics.S,
+          RGI: (existingStat?.RGI || 0) + metrics.RGI,
+          RGO: (existingStat?.RGO || 0) + metrics.RGO,
+          RRI: (existingStat?.RRI || 0) + metrics.RRI,
+          RRO: (existingStat?.RRO || 0) + metrics.RRO,
+          V: (existingStat?.V || 0) + metrics.V,
+          oneToOne: (existingStat?.oneToOne || 0) + metrics.oneToOne,
+          CEU: (existingStat?.CEU || 0) + metrics.CEU,
+          T: (existingStat?.T || 0) + metrics.T,
+          TYFCB_amount: (existingStat?.TYFCB_amount || 0) + metrics.TYFCB_amount
+        };
 
-        // Upsert and accumulate metrics for multiple uploads in the same week
-        await UserWeeklyStat.findOneAndUpdate(
-          { userId: user._id, weekId: week._id },
-          {
-            $inc: {
-              P: metrics.P,
-              A: metrics.A,
-              L: metrics.L,
-              M: metrics.M,
-              S: metrics.S,
-              RGI: metrics.RGI,
-              RGO: metrics.RGO,
-              RRI: metrics.RRI,
-              RRO: metrics.RRO,
-              V: metrics.V,
-              oneToOne: metrics.oneToOne,
-              CEU: metrics.CEU,
-              T: metrics.T,
-              TYFCB_amount: metrics.TYFCB_amount,
-              totalPoints
-            }
-          },
-          { upsert: true }
-        );
-        processed += 1;
+        const totalPoints = calculateTotalPoints(aggregated);
+
+        if (existingStat) {
+          existingStat.set({ ...aggregated, totalPoints });
+          await existingStat.save();
+        } else {
+          await UserWeeklyStat.create({
+            userId: user._id,
+            weekId: week._id,
+            ...aggregated,
+            totalPoints
+          });
+        }
+
+        processedRows += 1;
       }
     }
 
     return {
       week,
-      processed,
+      processedRows,
       skipped
     };
   } catch (error) {

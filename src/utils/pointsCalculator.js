@@ -37,19 +37,26 @@ function calculateTotalPoints(metrics) {
     TYFCB_amount = 0
   } = metrics;
 
-  const tyfcbPoints = Math.floor(TYFCB_amount / 1000) * 5;
+  // New rules:
+  // - Present points include Late, Medical, Substitute counts
+  // - TYFCB: 1 point per 1000 rupees
+  const presentPoints = (P + L + M + S) * 2;
+  const absentPoints = A * -2;
+  const referralPoints = (RGI + RGO + RRI + RRO) * 5;
+  const visitorPoints = V * 10;
+  const oneToOnePoints = oneToOne * 5; // "121"
+  const testimonialPoints = CEU * 5; // keep same mapping
+  const trainingPoints = T * 5;
+  const tyfcbPoints = Math.floor(TYFCB_amount / 1000) * 1;
 
   const total =
-    P * 2 +
-    A * -2 +
-    L * 0 +
-    M * 2 +
-    S * 2 +
-    (RGI + RGO + RRI + RRO) * 5 +
-    V * 10 +
-    oneToOne * 5 +
-    CEU * 5 +
-    T * 5 +
+    presentPoints +
+    absentPoints +
+    referralPoints +
+    visitorPoints +
+    oneToOnePoints +
+    testimonialPoints +
+    trainingPoints +
     tyfcbPoints;
 
   return total;

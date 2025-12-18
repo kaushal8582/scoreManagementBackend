@@ -3,7 +3,10 @@ const {
   getTopTeams,
   getTopPerformers,
   getTeamStatsByWeek,
-  getUserTotals
+  getUserTotals,
+  getCategoryTotals,
+  getUserBreakdown,
+  getTeamBreakdown
 } = require('../services/dashboardService');
 
 async function getTeamStatsController(req, res) {
@@ -45,12 +48,50 @@ module.exports = {
   getTeamStatsController,
   getTopTeamsController,
   getTopPerformersController,
-  getUserTotalsController
+  getUserTotalsController,
+  getCategoryTotalsController,
+  getUserBreakdownController,
+  getTeamBreakdownController
 };
 
 async function getUserTotalsController(req, res) {
   try {
     const stats = await getUserTotals();
+    return res.json(stats);
+  } catch (err) {
+    return res
+      .status(err.statusCode || 500)
+      .json({ message: err.message || 'Internal server error' });
+  }
+}
+
+async function getCategoryTotalsController(req, res) {
+  try {
+    const totals = await getCategoryTotals();
+    return res.json(totals);
+  } catch (err) {
+    return res
+      .status(err.statusCode || 500)
+      .json({ message: err.message || 'Internal server error' });
+  }
+}
+
+async function getUserBreakdownController(req, res) {
+  try {
+    const limit = Number(req.query.limit || 7);
+    const teamId = req.query.teamId ? req.query.teamId : null;
+    const stats = await getUserBreakdown({ limit, teamId });
+    return res.json(stats);
+  } catch (err) {
+    return res
+      .status(err.statusCode || 500)
+      .json({ message: err.message || 'Internal server error' });
+  }
+}
+
+async function getTeamBreakdownController(req, res) {
+  try {
+    const stats = await getTeamBreakdown();
     return res.json(stats);
   } catch (err) {
     return res

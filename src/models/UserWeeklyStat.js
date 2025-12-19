@@ -25,6 +25,7 @@ const userWeeklyStatSchema = new mongoose.Schema(
     oneToOne: { type: Number, default: 0 },
     TYFCB_amount: { type: Number, default: 0 },
     CEU: { type: Number, default: 0 },
+    TR :{ type: Number, default: 0 },
     T: { type: Number, default: 0 },
     CON : { type: Number, default: 0 },
     totalPoints: { type: Number, required: true }

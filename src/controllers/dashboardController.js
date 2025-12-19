@@ -68,6 +68,7 @@ async function getUserTotalsController(req, res) {
 async function getCategoryTotalsController(req, res) {
   try {
     const totals = await getCategoryTotals();
+    
     return res.json(totals);
   } catch (err) {
     return res

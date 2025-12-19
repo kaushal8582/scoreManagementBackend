@@ -34,7 +34,9 @@ function calculateTotalPoints(metrics) {
     oneToOne = 0,
     CEU = 0,
     T = 0,
-    TYFCB_amount = 0
+    TYFCB_amount = 0,
+    CON = 0,
+    TR = 0
   } = metrics;
 
   // New rules:
@@ -50,6 +52,7 @@ function calculateTotalPoints(metrics) {
   const trainingPoints = T * 5;
   const tyfcbPoints = Math.floor(TYFCB_amount / 1000) * 1;
   const conversionPoints = CON*25; // "Conversion"
+  const trainingReceivedPoints = TR * 5; // "Training Received"
 
   const total =
     presentPoints +
@@ -61,7 +64,8 @@ function calculateTotalPoints(metrics) {
     testimonialPoints +
     trainingPoints +
     tyfcbPoints +
-    conversionPoints;
+    conversionPoints +
+    trainingReceivedPoints;
 
 
 

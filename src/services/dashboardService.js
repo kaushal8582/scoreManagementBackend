@@ -65,6 +65,8 @@ async function getCategoryTotals() {
           RGO: { $sum: '$RGO' },
           RRI: { $sum: '$RRI' },
           RRO: { $sum: '$RRO' },
+          TR: { $sum: '$TR' },
+          CON: { $sum: '$CON' },
           V: { $sum: '$V' },
           oneToOne: { $sum: '$oneToOne' },
           CEU: { $sum: '$CEU' },
@@ -90,7 +92,9 @@ async function getCategoryTotals() {
           CEU: 1,
           T: 1,
           TYFCB_amount: 1,
-          totalPoints: 1
+          totalPoints: 1,
+          TR: 1,
+          CON: 1
         }
       }
     ];
@@ -112,6 +116,8 @@ async function getCategoryTotals() {
       oneToOne: 0,
       CEU: 0,
       T: 0,
+      TR: 0,
+      CON: 0,
       TYFCB_amount: 0,
       totalPoints: 0
     };
@@ -154,6 +160,7 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
             RRI: { $sum: '$stats.RRI' },
             RRO: { $sum: '$stats.RRO' },
             CON: { $sum: '$stats.CON' },
+            TR: { $sum: '$stats.TR' },
             V: { $sum: '$stats.V' },
             oneToOne: { $sum: '$stats.oneToOne' },
             CEU: { $sum: '$stats.CEU' },
@@ -188,6 +195,7 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
             RRO: { $ifNull: ['$RRO', 0] },
             V: { $ifNull: ['$V', 0] },
             CON: { $ifNull: ['$CON', 0] },
+            TR: { $ifNull: ['$TR', 0] },
             oneToOne: { $ifNull: ['$oneToOne', 0] },
             CEU: { $ifNull: ['$CEU', 0] },
             T: { $ifNull: ['$T', 0] },
@@ -217,6 +225,7 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
           RRI: { $sum: '$RRI' },
           RRO: { $sum: '$RRO' },
           CON: { $sum: '$CON' },
+          TR: { $sum: '$TR' },
           V: { $sum: '$V' },
           oneToOne: { $sum: '$oneToOne' },
           CEU: { $sum: '$CEU' },
@@ -259,6 +268,7 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
           RRI: 1,
           RRO: 1,
           V: 1,
+          TR: 1,
           CON: 1,
           oneToOne: 1,
           CEU: 1,
@@ -319,6 +329,7 @@ async function getTeamBreakdown() {
           RRO: { $sum: '$RRO' },
           V: { $sum: '$V' },
           CON: { $sum: '$CON' },
+          TR: { $sum: '$TR' },
           oneToOne: { $sum: '$oneToOne' },
           CEU: { $sum: '$CEU' },
           T: { $sum: '$T' },
@@ -344,6 +355,7 @@ async function getTeamBreakdown() {
           RRO: 1,
           V: 1,
           CON: 1,
+          TR: 1,
           oneToOne: 1,
           CEU: 1,
           T: 1,

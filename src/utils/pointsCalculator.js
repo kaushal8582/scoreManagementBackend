@@ -49,6 +49,7 @@ function calculateTotalPoints(metrics) {
   const testimonialPoints = CEU * 5; // keep same mapping
   const trainingPoints = T * 5;
   const tyfcbPoints = Math.floor(TYFCB_amount / 1000) * 1;
+  const conversionPoints = CON*25; // "Conversion"
 
   const total =
     presentPoints +
@@ -59,7 +60,10 @@ function calculateTotalPoints(metrics) {
     oneToOnePoints +
     testimonialPoints +
     trainingPoints +
-    tyfcbPoints;
+    tyfcbPoints +
+    conversionPoints;
+
+
 
   return total;
 }

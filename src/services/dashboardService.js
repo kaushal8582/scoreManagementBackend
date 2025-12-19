@@ -95,6 +95,9 @@ async function getCategoryTotals() {
       }
     ];
     const res = await UserWeeklyStat.aggregate(pipeline);
+
+    // console.log("response", res);
+
     return res[0] || {
       P: 0,
       A: 0,

@@ -129,72 +129,74 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
     if (teamObjectId) {
       // Start from users in the team and left-join weekly stats
       // Match both ObjectId and string teamId to avoid type mismatch exclusions
-      // const pipeline = [
-      //   { $match: { $or: [ { teamId: teamObjectId }, { teamId: teamId } ] } },
-      //   {
-      //     $lookup: {
-      //       from: 'userweeklystats',
-      //       localField: '_id',
-      //       foreignField: 'userId',
-      //       as: 'stats'
-      //     }
-      //   },
-      //   {
-      //     $addFields: {
-      //       P: { $sum: '$stats.P' },
-      //       A: { $sum: '$stats.A' },
-      //       L: { $sum: '$stats.L' },
-      //       M: { $sum: '$stats.M' },
-      //       S: { $sum: '$stats.S' },
-      //       RGI: { $sum: '$stats.RGI' },
-      //       RGO: { $sum: '$stats.RGO' },
-      //       RRI: { $sum: '$stats.RRI' },
-      //       RRO: { $sum: '$stats.RRO' },
-      //       V: { $sum: '$stats.V' },
-      //       oneToOne: { $sum: '$stats.oneToOne' },
-      //       CEU: { $sum: '$stats.CEU' },
-      //       T: { $sum: '$stats.T' },
-      //       TYFCB_amount: { $sum: '$stats.TYFCB_amount' },
-      //       totalPoints: { $sum: '$stats.totalPoints' }
-      //     }
-      //   },
-      //   {
-      //     $lookup: {
-      //       from: 'teams',
-      //       localField: 'teamId',
-      //       foreignField: '_id',
-      //       as: 'team'
-      //     }
-      //   },
-      //   { $unwind: { path: '$team', preserveNullAndEmptyArrays: true } },
-      //   {
-      //     $project: {
-      //       _id: 0,
-      //       userId: '$_id',
-      //       fullName: '$fullName',
-      //       teamName: '$team.name',
-      //       P: { $ifNull: ['$P', 0] },
-      //       A: { $ifNull: ['$A', 0] },
-      //       L: { $ifNull: ['$L', 0] },
-      //       M: { $ifNull: ['$M', 0] },
-      //       S: { $ifNull: ['$S', 0] },
-      //       RGI: { $ifNull: ['$RGI', 0] },
-      //       RGO: { $ifNull: ['$RGO', 0] },
-      //       RRI: { $ifNull: ['$RRI', 0] },
-      //       RRO: { $ifNull: ['$RRO', 0] },
-      //       V: { $ifNull: ['$V', 0] },
-      //       oneToOne: { $ifNull: ['$oneToOne', 0] },
-      //       CEU: { $ifNull: ['$CEU', 0] },
-      //       T: { $ifNull: ['$T', 0] },
-      //       TYFCB_amount: { $ifNull: ['$TYFCB_amount', 0] },
-      //       totalPoints: { $ifNull: ['$totalPoints', 0] }
-      //     }
-      //   },
-      //   { $sort: { totalPoints: -1, } },
-      //   // Only apply limit if a positive number is provided
-      //   // ...(Number.isFinite(limit) && limit > 0 ? [{ $limit: limit }] : [])
-      // ];
-      // return User.aggregate(pipeline);
+      const pipeline = [
+        { $match: { $or: [ { teamId: teamObjectId }, { teamId: teamId } ] } },
+        {
+          $lookup: {
+            from: 'userweeklystats',
+            localField: '_id',
+            foreignField: 'userId',
+            as: 'stats'
+          }
+        },
+        {
+          $addFields: {
+            P: { $sum: '$stats.P' },
+            A: { $sum: '$stats.A' },
+            L: { $sum: '$stats.L' },
+            M: { $sum: '$stats.M' },
+            S: { $sum: '$stats.S' },
+            RGI: { $sum: '$stats.RGI' },
+            RGO: { $sum: '$stats.RGO' },
+            RRI: { $sum: '$stats.RRI' },
+            RRO: { $sum: '$stats.RRO' },
+            CON: { $sum: '$stats.CON' },
+            V: { $sum: '$stats.V' },
+            oneToOne: { $sum: '$stats.oneToOne' },
+            CEU: { $sum: '$stats.CEU' },
+            T: { $sum: '$stats.T' },
+            TYFCB_amount: { $sum: '$stats.TYFCB_amount' },
+            totalPoints: { $sum: '$stats.totalPoints' }
+          }
+        },
+        {
+          $lookup: {
+            from: 'teams',
+            localField: 'teamId',
+            foreignField: '_id',
+            as: 'team'
+          }
+        },
+        { $unwind: { path: '$team', preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            _id: 0,
+            userId: '$_id',
+            fullName: '$fullName',
+            teamName: '$team.name',
+            P: { $ifNull: ['$P', 0] },
+            A: { $ifNull: ['$A', 0] },
+            L: { $ifNull: ['$L', 0] },
+            M: { $ifNull: ['$M', 0] },
+            S: { $ifNull: ['$S', 0] },
+            RGI: { $ifNull: ['$RGI', 0] },
+            RGO: { $ifNull: ['$RGO', 0] },
+            RRI: { $ifNull: ['$RRI', 0] },
+            RRO: { $ifNull: ['$RRO', 0] },
+            V: { $ifNull: ['$V', 0] },
+            CON: { $ifNull: ['$CON', 0] },
+            oneToOne: { $ifNull: ['$oneToOne', 0] },
+            CEU: { $ifNull: ['$CEU', 0] },
+            T: { $ifNull: ['$T', 0] },
+            TYFCB_amount: { $ifNull: ['$TYFCB_amount', 0] },
+            totalPoints: { $ifNull: ['$totalPoints', 0] }
+          }
+        },
+        { $sort: { totalPoints: -1, } },
+        // Only apply limit if a positive number is provided
+        // ...(Number.isFinite(limit) && limit > 0 ? [{ $limit: limit }] : [])
+      ];
+      return User.aggregate(pipeline);
     }
 
     // Default: aggregate from stats when no teamId (top performers across all teams)
@@ -211,6 +213,7 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
           RGO: { $sum: '$RGO' },
           RRI: { $sum: '$RRI' },
           RRO: { $sum: '$RRO' },
+          CON: { $sum: '$CON' },
           V: { $sum: '$V' },
           oneToOne: { $sum: '$oneToOne' },
           CEU: { $sum: '$CEU' },
@@ -253,6 +256,7 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
           RRI: 1,
           RRO: 1,
           V: 1,
+          CON: 1,
           oneToOne: 1,
           CEU: 1,
           T: 1,
@@ -311,6 +315,7 @@ async function getTeamBreakdown() {
           RRI: { $sum: '$RRI' },
           RRO: { $sum: '$RRO' },
           V: { $sum: '$V' },
+          CON: { $sum: '$CON' },
           oneToOne: { $sum: '$oneToOne' },
           CEU: { $sum: '$CEU' },
           T: { $sum: '$T' },
@@ -335,6 +340,7 @@ async function getTeamBreakdown() {
           RRI: 1,
           RRO: 1,
           V: 1,
+          CON: 1,
           oneToOne: 1,
           CEU: 1,
           T: 1,

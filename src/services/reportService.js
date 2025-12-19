@@ -75,7 +75,8 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
           oneToOne: Number(row['1-2-1'] || row.oneToOne || 0),
           CEU: Number(row.CEU || 0),
           T: Number(row.T || 0),
-          TYFCB_amount: Number(row.TYFCB || row.TYFCB_amount || 0)
+          TYFCB_amount: Number(row.TYFCB || row.TYFCB_amount || 0),
+          CON: Number(row.CON || 0),
         };
 
         // Upsert: aggregate metrics per user for the week
@@ -94,7 +95,8 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
           oneToOne: (existingStat?.oneToOne || 0) + metrics.oneToOne,
           CEU: (existingStat?.CEU || 0) + metrics.CEU,
           T: (existingStat?.T || 0) + metrics.T,
-          TYFCB_amount: (existingStat?.TYFCB_amount || 0) + metrics.TYFCB_amount
+          TYFCB_amount: (existingStat?.TYFCB_amount || 0) + metrics.TYFCB_amount,
+          CON: (existingStat?.CON || 0) + metrics.CON,
         };
 
         const totalPoints = calculateTotalPoints(aggregated);

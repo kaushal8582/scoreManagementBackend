@@ -45,11 +45,11 @@ function calculateTotalPoints(metrics) {
   const presentPoints = (P + L + S) * 2;
   const medicalPoints = M * -2;
   const absentPoints = A * -2;
-  const referralPoints = (RGI + RGO + RRI + RRO) * 5;
+  const referralPoints = (RGI + RGO ) * 5;
   const visitorPoints = V * 10;
   const oneToOnePoints = oneToOne * 5; // "121"
-  const testimonialPoints = CEU * 5; // keep same mapping
-  const trainingPoints = T * 5;
+  const testimonialPoints = T * 5; // keep same mapping
+  // const trainingPoints = T * 5;
   const tyfcbPoints = Math.floor(TYFCB_amount / 1000) * 1;
   const conversionPoints = CON*25; // "Conversion"
   const trainingReceivedPoints = TR * 5; // "Training Received"
@@ -62,7 +62,6 @@ function calculateTotalPoints(metrics) {
     visitorPoints +
     oneToOnePoints +
     testimonialPoints +
-    trainingPoints +
     tyfcbPoints +
     conversionPoints +
     trainingReceivedPoints;

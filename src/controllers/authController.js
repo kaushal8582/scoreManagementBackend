@@ -30,6 +30,19 @@ async function register(req, res) {
   }
 }
 
+// async function test(params) {
+//   await registerUser({
+//     firstName: "guest",
+//     lastName: "garg",
+//     email: "ashish1@snabbtech.com",
+//     password: "K.b123@45",
+//     category: "guest"
+//   })
+// }
+
+// test();
+
+
 async function login(req, res) {
   try {
     const { email, password } = req.body;

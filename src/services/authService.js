@@ -42,11 +42,11 @@ async function registerUser({ firstName, lastName, email, password, category }) 
 
 // async function test(params) {
 //   await registerUser({
-//     firstName: "ashish",
-//     lastName: "garg",
-//     email: "ashish@snabbtech.com",
-//     password: "123456",
-//     category: "admin"
+//     firstName: "bni",
+//     lastName: "guest",
+//     email: "bni@snabbtech.com",
+//     password: "Bni@1234",
+//     category: "guest"
 //   })
 // }
 // test()

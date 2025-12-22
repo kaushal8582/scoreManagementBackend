@@ -42,7 +42,7 @@ function calculateTotalPoints(metrics) {
   // New rules:
   // - Present points include Late, Medical, Substitute counts
   // - TYFCB: 1 point per 1000 rupees
-  const presentPoints = (P + L + S) * 2;
+  const presentPoints = (P  + S) * 2;
   const medicalPoints = M * -2;
   const absentPoints = A * -2;
   const referralPoints = (RGI + RGO ) * 5;

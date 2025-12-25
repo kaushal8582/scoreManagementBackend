@@ -67,6 +67,12 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
         }
 
         console.log("6")
+        // Calculate TYFCB points and cap at 100 points per user per report
+        // 100 points = 100 * 10000 = 1,000,000 rupees
+        const rawTYFCB_amount = Number(row.TYFCB || row.TYFCB_amount || 0);
+        const tyfcbPoints = Math.floor(rawTYFCB_amount / 10000);
+        const cappedTYFCB_amount = tyfcbPoints > 100 ? 1000000 : rawTYFCB_amount;
+        
         const metrics = {
           P: Number(row.P || 0),
           A: Number(row.A || 0),
@@ -81,7 +87,7 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
           oneToOne: Number(row['1-2-1'] || row.oneToOne || 0),
           CEU: Number(row.CEU || 0),
           T: Number(row.T || 0),
-          TYFCB_amount: Number(row.TYFCB || row.TYFCB_amount || 0),
+          TYFCB_amount: cappedTYFCB_amount,
           CON: Number(row.CON || 0),
           TR: Number(row.TR || 0),
         };

@@ -41,7 +41,7 @@ function calculateTotalPoints(metrics) {
 
   // New rules:
   // - Present points include Late, Medical, Substitute counts
-  // - TYFCB: 1 point per 1000 rupees
+  // - TYFCB: 1 point per 10000 rupees
   const presentPoints = (P  + S) * 2;
   const medicalPoints = M * -2;
   const absentPoints = A * -2;
@@ -50,9 +50,9 @@ function calculateTotalPoints(metrics) {
   const oneToOnePoints = oneToOne * 5; // "121"
   const testimonialPoints = T * 5; // keep same mapping
   // const trainingPoints = T * 5;
-  const tyfcbPoints = Math.floor(TYFCB_amount / 1000) * 1;
+  const tyfcbPoints = Math.floor(TYFCB_amount / 10000) * 1;
   const conversionPoints = CON*25; // "Conversion"
-  const trainingReceivedPoints = TR * 5; // "Training Received"
+  const trainingReceivedPoints = TR * 15; // "Training Received" - updated from 5 to 15
 
   const total =
     presentPoints +

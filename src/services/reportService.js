@@ -14,7 +14,7 @@ const { getWeekRange } = require('../utils/weekUtils');
  */
 async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
   try {
-    console.log("1")
+    // console.log("1")
     const uploadDate = new Date();
     let weekStartDate;
     let weekEndDate;
@@ -27,7 +27,7 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
       weekStartDate = range.weekStartDate;
       weekEndDate = range.weekEndDate;
     }
-    console.log("2")
+    // console.log("2")
 
     // Overwrite logic: ensure a clean slate for the target week
     const existingWeek = await WeeklyReport.findOne({ weekStartDate, weekEndDate });
@@ -35,14 +35,14 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
       await UserWeeklyStat.deleteMany({ weekId: existingWeek._id });
       await WeeklyReport.deleteOne({ _id: existingWeek._id });
     }
-    console.log("3")
+    // console.log("3")
 
     const week = await WeeklyReport.create({
       weekStartDate,
       weekEndDate,
       uploadedAt: uploadDate
     });
-    console.log("4")
+    // console.log("4")
 
     const skipped = [];
     let processedRows = 0;
@@ -57,7 +57,7 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
           skipped.push({ row, reason: 'Missing firstName or lastName' });
           continue;
         }
-        console.log("5")
+        // console.log("5")
 
         const fullName = `${firstName} ${lastName}`;
         const user = await User.findOne({ fullName });
@@ -66,7 +66,7 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
           continue;
         }
 
-        console.log("6")
+        // console.log("6")
         // Calculate TYFCB points and cap at 100 points per user per report
         // 100 points = 100 * 10000 = 1,000,000 rupees
         const rawTYFCB_amount = Number(row.TYFCB || row.TYFCB_amount || 0);
@@ -112,10 +112,10 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
           CON: (existingStat?.CON || 0) + metrics.CON,
           TR: (existingStat?.TR || 0) + metrics.TR,
         };
-        console.log("7")
+        // console.log("7")
 
         const totalPoints = calculateTotalPoints(aggregated);
-        console.log("dd")
+        // console.log("dd")
 
         if (existingStat) {
           existingStat.set({ ...aggregated, totalPoints });
@@ -128,12 +128,12 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
             totalPoints
           });
         }
-        console.log("8")
+        // console.log("8")
 
         processedRows += 1;
       }
     }
-    console.log("9")
+    // console.log("9")
 
     return {
       week,

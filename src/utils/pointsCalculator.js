@@ -50,7 +50,7 @@ function calculateTotalPoints(metrics) {
   const oneToOnePoints = oneToOne * 5; // "121"
   const testimonialPoints = T * 5; // keep same mapping
   // const trainingPoints = T * 5;
-  const tyfcbPoints = Math.floor(TYFCB_amount / 10000) * 1;
+  const tyfcbPoints = Number((TYFCB_amount / 10000).toFixed(2));
   const conversionPoints = CON*25; // "Conversion"
   const trainingReceivedPoints = TR * 15; // "Training Received" - updated from 5 to 15
 

@@ -486,9 +486,12 @@ async function getTeamStatsByWeek() {
         _id: {
           teamId: '$team._id',
           teamName: '$team.name',
-          weekStartDate: '$week.weekStartDate'
+          weekStartDate: '$week.weekStartDate',
+          weekEndDate: '$week.weekEndDate'
         },
-        totalPoints: { $sum: '$totalPoints' }
+        totalPoints: { $sum: '$totalPoints' },
+        weekStartDate: { $first: '$week.weekStartDate' },
+        weekEndDate: { $first: '$week.weekEndDate' }
       }
     },
     {
@@ -496,7 +499,12 @@ async function getTeamStatsByWeek() {
         _id: 0,
         teamId: '$_id.teamId',
         teamName: '$_id.teamName',
-        weekStartDate: '$_id.weekStartDate',
+        weekStartDate: {
+          $dateToString: { format: "%Y-%m-%d", date: "$weekStartDate" }
+        },
+        weekEndDate: {
+          $dateToString: { format: "%Y-%m-%d", date: "$weekEndDate" }
+        },
         totalPoints: 1
       }
     },

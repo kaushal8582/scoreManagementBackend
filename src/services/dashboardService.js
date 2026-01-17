@@ -4,10 +4,44 @@ const WeeklyReport = require('../models/WeeklyReport');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 
-async function getTeamStats() {
+// Helper function to parse month/year from query (format: "YYYY-MM")
+function parseMonthYear(monthYearStr) {
+  if (!monthYearStr) return null;
+  const parts = monthYearStr.split('-');
+  if (parts.length !== 2) return null;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  if (isNaN(year) || isNaN(month) || month < 1 || month > 12) return null;
+  return { year, month };
+}
+
+async function getTeamStats(monthYear = null) {
   // Aggregate total points per team across all weeks
   try {
+    const monthYearFilter = parseMonthYear(monthYear);
     const pipeline = [
+      {
+        $lookup: {
+          from: 'weeklyreports',
+          localField: 'weekId',
+          foreignField: '_id',
+          as: 'week'
+        }
+      },
+      { $unwind: '$week' }
+    ];
+
+    // Add month/year filter if provided
+    if (monthYearFilter) {
+      pipeline.push({
+        $match: {
+          'week.month': monthYearFilter.month,
+          'week.year': monthYearFilter.year
+        }
+      });
+    }
+
+    pipeline.push(
       {
         $lookup: {
           from: 'users',
@@ -41,7 +75,7 @@ async function getTeamStats() {
         }
       },
       { $sort: { totalPoints: -1 } }
-    ];
+    );
   
     return UserWeeklyStat.aggregate(pipeline);
   } catch (error) {
@@ -50,9 +84,33 @@ async function getTeamStats() {
 }
 
 // Aggregate totals across all categories for all weeks
-async function getCategoryTotals() {
+async function getCategoryTotals(monthYear = null) {
   try {
+    const monthYearFilter = parseMonthYear(monthYear);
+    
     const pipeline = [
+      {
+        $lookup: {
+          from: 'weeklyreports',
+          localField: 'weekId',
+          foreignField: '_id',
+          as: 'week'
+        }
+      },
+      { $unwind: '$week' }
+    ];
+
+    // Add month/year filter if provided
+    if (monthYearFilter) {
+      pipeline.push({
+        $match: {
+          'week.month': monthYearFilter.month,
+          'week.year': monthYearFilter.year
+        }
+      });
+    }
+
+    pipeline.push(
       {
         $group: {
           _id: null,
@@ -97,7 +155,7 @@ async function getCategoryTotals() {
           CON: 1
         }
       }
-    ];
+    );
     const res = await UserWeeklyStat.aggregate(pipeline);
 
     // console.log("response", res);
@@ -128,9 +186,10 @@ async function getCategoryTotals() {
 
 // Per-user breakdown across all weeks.
 // When teamId is provided, include ALL team members (even with zero stats).
-async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
+async function getUserBreakdown({ limit = 7, teamId = null, monthYear = null } = {}) {
   console.log("limt hai y e",limit);
   try {
+    const monthYearFilter = parseMonthYear(monthYear);
     const teamObjectId = teamId && mongoose.Types.ObjectId.isValid(teamId)
       ? new mongoose.Types.ObjectId(teamId)
       : null;
@@ -148,27 +207,57 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
             as: 'stats'
           }
         },
+        { $unwind: { path: '$stats', preserveNullAndEmptyArrays: true } },
         {
-          $addFields: {
-            P: { $sum: '$stats.P' },
-            A: { $sum: '$stats.A' },
-            L: { $sum: '$stats.L' },
-            M: { $sum: '$stats.M' },
-            S: { $sum: '$stats.S' },
-            RGI: { $sum: '$stats.RGI' },
-            RGO: { $sum: '$stats.RGO' },
-            RRI: { $sum: '$stats.RRI' },
-            RRO: { $sum: '$stats.RRO' },
-            CON: { $sum: '$stats.CON' },
-            TR: { $sum: '$stats.TR' },
-            V: { $sum: '$stats.V' },
-            oneToOne: { $sum: '$stats.oneToOne' },
-            CEU: { $sum: '$stats.CEU' },
-            T: { $sum: '$stats.T' },
-            TYFCB_amount: { $sum: '$stats.TYFCB_amount' },
-            totalPoints: { $sum: '$stats.totalPoints' }
+          $lookup: {
+            from: 'weeklyreports',
+            localField: 'stats.weekId',
+            foreignField: '_id',
+            as: 'week'
           }
         },
+        { $unwind: { path: '$week', preserveNullAndEmptyArrays: true } }
+      ];
+
+      // Add month/year filter if provided - filter before grouping
+      if (monthYearFilter) {
+        pipeline.push({
+          $match: {
+            $or: [
+              { stats: { $exists: false } }, // No stats at all
+              { week: { $exists: true }, 'week.month': monthYearFilter.month, 'week.year': monthYearFilter.year }
+            ]
+          }
+        });
+      }
+
+      // Group by user, summing only the filtered stats
+      pipeline.push({
+        $group: {
+          _id: '$_id',
+          fullName: { $first: '$fullName' },
+          teamId: { $first: '$teamId' },
+          P: { $sum: { $ifNull: ['$stats.P', 0] } },
+          A: { $sum: { $ifNull: ['$stats.A', 0] } },
+          L: { $sum: { $ifNull: ['$stats.L', 0] } },
+          M: { $sum: { $ifNull: ['$stats.M', 0] } },
+          S: { $sum: { $ifNull: ['$stats.S', 0] } },
+          RGI: { $sum: { $ifNull: ['$stats.RGI', 0] } },
+          RGO: { $sum: { $ifNull: ['$stats.RGO', 0] } },
+          RRI: { $sum: { $ifNull: ['$stats.RRI', 0] } },
+          RRO: { $sum: { $ifNull: ['$stats.RRO', 0] } },
+          CON: { $sum: { $ifNull: ['$stats.CON', 0] } },
+          TR: { $sum: { $ifNull: ['$stats.TR', 0] } },
+          V: { $sum: { $ifNull: ['$stats.V', 0] } },
+          oneToOne: { $sum: { $ifNull: ['$stats.oneToOne', 0] } },
+          CEU: { $sum: { $ifNull: ['$stats.CEU', 0] } },
+          T: { $sum: { $ifNull: ['$stats.T', 0] } },
+          TYFCB_amount: { $sum: { $ifNull: ['$stats.TYFCB_amount', 0] } },
+          totalPoints: { $sum: { $ifNull: ['$stats.totalPoints', 0] } }
+        }
+      });
+
+      pipeline.push(
         {
           $lookup: {
             from: 'teams',
@@ -203,15 +292,35 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
             totalPoints: { $ifNull: ['$totalPoints', 0] }
           }
         },
-        { $sort: { totalPoints: -1, } },
-        // Only apply limit if a positive number is provided
-        // ...(Number.isFinite(limit) && limit > 0 ? [{ $limit: limit }] : [])
-      ];
+        { $sort: { totalPoints: -1 } }
+      );
       return User.aggregate(pipeline);
     }
 
     // Default: aggregate from stats when no teamId (top performers across all teams)
     const pipeline = [
+      {
+        $lookup: {
+          from: 'weeklyreports',
+          localField: 'weekId',
+          foreignField: '_id',
+          as: 'week'
+        }
+      },
+      { $unwind: '$week' }
+    ];
+
+    // Add month/year filter if provided
+    if (monthYearFilter) {
+      pipeline.push({
+        $match: {
+          'week.month': monthYearFilter.month,
+          'week.year': monthYearFilter.year
+        }
+      });
+    }
+
+    pipeline.push(
       {
         $group: {
           _id: '$userId',
@@ -279,7 +388,7 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
       },
       { $sort: { totalPoints: -1 } },
       { $limit: limit }
-    ];
+    );
     return UserWeeklyStat.aggregate(pipeline);
   } catch (error) {
     throw error;
@@ -287,9 +396,32 @@ async function getUserBreakdown({ limit = 7, teamId = null } = {}) {
 }
 
 // Per-team breakdown across all weeks
-async function getTeamBreakdown() {
+async function getTeamBreakdown(monthYear = null) {
   try {
+    const monthYearFilter = parseMonthYear(monthYear);
     const pipeline = [
+      {
+        $lookup: {
+          from: 'weeklyreports',
+          localField: 'weekId',
+          foreignField: '_id',
+          as: 'week'
+        }
+      },
+      { $unwind: '$week' }
+    ];
+
+    // Add month/year filter if provided
+    if (monthYearFilter) {
+      pipeline.push({
+        $match: {
+          'week.month': monthYearFilter.month,
+          'week.year': monthYearFilter.year
+        }
+      });
+    }
+
+    pipeline.push(
       {
         $lookup: {
           from: 'users',
@@ -299,7 +431,6 @@ async function getTeamBreakdown() {
         }
       },
       { $unwind: '$user' },
-
       {
         $lookup: {
           from: 'teams',
@@ -309,7 +440,6 @@ async function getTeamBreakdown() {
         }
       },
       { $unwind: '$team' },
-
       {
         $group: {
           _id: '$team._id',
@@ -365,7 +495,7 @@ async function getTeamBreakdown() {
       },
 
       { $sort: { totalPoints: -1 } }
-    ];
+    );
 
     const base = await UserWeeklyStat.aggregate(pipeline);
 
@@ -387,8 +517,8 @@ async function getTeamBreakdown() {
   }
 }
 
-async function getTopTeams(limit = 3) {
-  const stats = await getTeamStats();
+async function getTopTeams(limit = 3, monthYear = null) {
+  const stats = await getTeamStats(monthYear);
   const top = stats.slice(0, limit);
   // Enrich with captain name if available
   const enriched = [];
@@ -404,9 +534,32 @@ async function getTopTeams(limit = 3) {
   return enriched;
 }
 
-async function getTopPerformers(limit = 3) {
+async function getTopPerformers(limit = 3, monthYear = null) {
   try {
+    const monthYearFilter = parseMonthYear(monthYear);
     const pipeline = [
+      {
+        $lookup: {
+          from: 'weeklyreports',
+          localField: 'weekId',
+          foreignField: '_id',
+          as: 'week'
+        }
+      },
+      { $unwind: '$week' }
+    ];
+
+    // Add month/year filter if provided
+    if (monthYearFilter) {
+      pipeline.push({
+        $match: {
+          'week.month': monthYearFilter.month,
+          'week.year': monthYearFilter.year
+        }
+      });
+    }
+
+    pipeline.push(
       {
         $group: {
           _id: '$userId',
@@ -421,28 +574,28 @@ async function getTopPerformers(limit = 3) {
           as: 'user'
         }
       },
-    { $unwind: '$user' },
-    {
-      $lookup: {
-        from: 'teams',
-        localField: 'user.teamId',
-        foreignField: '_id',
-        as: 'team'
-      }
-    },
-    { $unwind: { path: '$team', preserveNullAndEmptyArrays: true } },
-    {
-      $project: {
-        _id: 0,
-        userId: '$user._id',
-        fullName: '$user.fullName',
-        teamName: '$team.name',
-        totalPoints: 1
-      }
-    },
-    { $sort: { totalPoints: -1 } },
-    { $limit: limit }
-  ];
+      { $unwind: '$user' },
+      {
+        $lookup: {
+          from: 'teams',
+          localField: 'user.teamId',
+          foreignField: '_id',
+          as: 'team'
+        }
+      },
+      { $unwind: { path: '$team', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 0,
+          userId: '$user._id',
+          fullName: '$user.fullName',
+          teamName: '$team.name',
+          totalPoints: 1
+        }
+      },
+      { $sort: { totalPoints: -1 } },
+      { $limit: limit }
+    );
 
     return UserWeeklyStat.aggregate(pipeline);
   } catch (error) {
@@ -450,9 +603,10 @@ async function getTopPerformers(limit = 3) {
   }
 }
 
-async function getTeamStatsByWeek() {
+async function getTeamStatsByWeek(monthYear = null) {
   // Useful for charts: points grouped by team and week
   try {
+    const monthYearFilter = parseMonthYear(monthYear);
     const pipeline = [
       {
         $lookup: {
@@ -480,36 +634,49 @@ async function getTeamStatsByWeek() {
         as: 'week'
       }
     },
-    { $unwind: '$week' },
-    {
-      $group: {
-        _id: {
-          teamId: '$team._id',
-          teamName: '$team.name',
-          weekStartDate: '$week.weekStartDate',
-          weekEndDate: '$week.weekEndDate'
-        },
-        totalPoints: { $sum: '$totalPoints' },
-        weekStartDate: { $first: '$week.weekStartDate' },
-        weekEndDate: { $first: '$week.weekEndDate' }
-      }
-    },
-    {
-      $project: {
-        _id: 0,
-        teamId: '$_id.teamId',
-        teamName: '$_id.teamName',
-        weekStartDate: {
-          $dateToString: { format: "%Y-%m-%d", date: "$weekStartDate" }
-        },
-        weekEndDate: {
-          $dateToString: { format: "%Y-%m-%d", date: "$weekEndDate" }
-        },
-        totalPoints: 1
-      }
-    },
-    { $sort: { weekStartDate: 1, teamName: 1 } }
-  ];
+    { $unwind: '$week' }
+    ];
+
+    // Add month/year filter if provided
+    if (monthYearFilter) {
+      pipeline.push({
+        $match: {
+          'week.month': monthYearFilter.month,
+          'week.year': monthYearFilter.year
+        }
+      });
+    }
+
+    pipeline.push(
+      {
+        $group: {
+          _id: {
+            teamId: '$team._id',
+            teamName: '$team.name',
+            weekStartDate: '$week.weekStartDate',
+            weekEndDate: '$week.weekEndDate'
+          },
+          totalPoints: { $sum: '$totalPoints' },
+          weekStartDate: { $first: '$week.weekStartDate' },
+          weekEndDate: { $first: '$week.weekEndDate' }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          teamId: '$_id.teamId',
+          teamName: '$_id.teamName',
+          weekStartDate: {
+            $dateToString: { format: "%Y-%m-%d", date: "$weekStartDate" }
+          },
+          weekEndDate: {
+            $dateToString: { format: "%Y-%m-%d", date: "$weekEndDate" }
+          },
+          totalPoints: 1
+        }
+      },
+      { $sort: { weekStartDate: 1, teamName: 1 } }
+    );
 
     return UserWeeklyStat.aggregate(pipeline);
   } catch (error) {

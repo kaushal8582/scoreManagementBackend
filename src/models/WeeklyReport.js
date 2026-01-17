@@ -10,6 +10,16 @@ const weeklyReportSchema = new mongoose.Schema(
       type: Date,
       required: true
     },
+    month: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 12
+    },
+    year: {
+      type: Number,
+      required: true
+    },
     uploadedAt: {
       type: Date,
       required: true,

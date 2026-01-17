@@ -12,12 +12,14 @@ const { getWeekRange } = require('../utils/weekUtils');
  * - Overwrites existing report for the week (removes old stats + report).
  * - Upserts per user per week, aggregating metrics across multiple files.
  */
-async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
+async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput, monthYearInput) {
   try {
     // console.log("1")
     const uploadDate = new Date();
     let weekStartDate;
     let weekEndDate;
+    let month;
+    let year;
 
     if (weekStartDateInput && weekEndDateInput) {
       weekStartDate = new Date(weekStartDateInput);
@@ -27,6 +29,24 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
       weekStartDate = range.weekStartDate;
       weekEndDate = range.weekEndDate;
     }
+
+    // Parse month/year from input (format: "YYYY-MM" or "2025-01")
+    if (monthYearInput) {
+      const [yearStr, monthStr] = monthYearInput.split('-');
+      year = parseInt(yearStr, 10);
+      month = parseInt(monthStr, 10);
+    } else {
+      // Default to the month of weekStartDate if not provided
+      month = weekStartDate.getMonth() + 1; // getMonth() returns 0-11
+      year = weekStartDate.getFullYear();
+    }
+
+    if (!month || !year || month < 1 || month > 12) {
+      const error = new Error('Month and year are required. Format: YYYY-MM (e.g., 2025-01)');
+      error.statusCode = 400;
+      throw error;
+    }
+
     // console.log("2")
 
     // Overwrite logic: ensure a clean slate for the target week
@@ -40,6 +60,8 @@ async function uploadWeeklyReport(files, weekStartDateInput, weekEndDateInput) {
     const week = await WeeklyReport.create({
       weekStartDate,
       weekEndDate,
+      month,
+      year,
       uploadedAt: uploadDate
     });
     // console.log("4")

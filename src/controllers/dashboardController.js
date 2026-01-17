@@ -11,7 +11,8 @@ const {
 
 async function getTeamStatsController(req, res) {
   try {
-    const stats = await getTeamStatsByWeek();
+    const monthYear = req.query.monthYear || null;
+    const stats = await getTeamStatsByWeek(monthYear);
     return res.json(stats);
   } catch (err) {
     return res
@@ -23,7 +24,8 @@ async function getTeamStatsController(req, res) {
 async function getTopTeamsController(req, res) {
   try {
     const limit = Number(req.query.limit || 3);
-    const stats = await getTopTeams(limit);
+    const monthYear = req.query.monthYear || null;
+    const stats = await getTopTeams(limit, monthYear);
     return res.json(stats);
   } catch (err) {
     return res
@@ -35,7 +37,8 @@ async function getTopTeamsController(req, res) {
 async function getTopPerformersController(req, res) {
   try {
     const limit = Number(req.query.limit || 3);
-    const stats = await getTopPerformers(limit);
+    const monthYear = req.query.monthYear || null;
+    const stats = await getTopPerformers(limit, monthYear);
     return res.json(stats);
   } catch (err) {
     return res
@@ -67,7 +70,8 @@ async function getUserTotalsController(req, res) {
 
 async function getCategoryTotalsController(req, res) {
   try {
-    const totals = await getCategoryTotals();
+    const monthYear = req.query.monthYear || null;
+    const totals = await getCategoryTotals(monthYear);
     
     return res.json(totals);
   } catch (err) {
@@ -81,7 +85,8 @@ async function getUserBreakdownController(req, res) {
   try {
     const limit = Number(req.query.limit || 7);
     const teamId = req.query.teamId ? req.query.teamId : null;
-    const stats = await getUserBreakdown({ limit, teamId });
+    const monthYear = req.query.monthYear || null;
+    const stats = await getUserBreakdown({ limit, teamId, monthYear });
     return res.json(stats);
   } catch (err) {
     return res
@@ -92,7 +97,8 @@ async function getUserBreakdownController(req, res) {
 
 async function getTeamBreakdownController(req, res) {
   try {
-    const stats = await getTeamBreakdown();
+    const monthYear = req.query.monthYear || null;
+    const stats = await getTeamBreakdown(monthYear);
     return res.json(stats);
   } catch (err) {
     return res

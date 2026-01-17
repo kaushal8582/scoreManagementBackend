@@ -11,8 +11,13 @@ async function uploadWeeklyReportController(req, res) {
     if (!files || files.length === 0) {
       return res.status(400).json({ message: 'At least one CSV file is required' });
     }
-    const { weekStartDate, weekEndDate } = req.body || {};
-    const result = await uploadWeeklyReport(files, weekStartDate, weekEndDate);
+    const { weekStartDate, weekEndDate, monthYear } = req.body || {};
+    
+    if (!monthYear) {
+      return res.status(400).json({ message: 'Month/Year is required. Format: YYYY-MM (e.g., 2025-01)' });
+    }
+    
+    const result = await uploadWeeklyReport(files, weekStartDate, weekEndDate, monthYear);
     return res.status(201).json(result);
   } catch (err) {
     return res

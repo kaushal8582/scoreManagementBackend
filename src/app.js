@@ -6,6 +6,7 @@ const userRoutes = require('./routes/userRoutes');
 const teamRoutes = require('./routes/teamRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const formRoutes = require("./routes/formRoutes")
 const cron = require('node-cron');
 const http = require('http');
 
@@ -28,16 +29,17 @@ app.use('/api/users', userRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/form',formRoutes);
 
 // Schedule a cron job to hit the /health endpoint every 5 minutes
-cron.schedule('*/1 * * * *', async () => {
-  try {
-    const res = await http.get('http://localhost:3220/health');
-    console.log(`Health check: ${res.statusCode}`);
-  } catch (error) {
-    console.error('Health check failed:', error);
-  }
-});
+// cron.schedule('*/1 * * * *', async () => {
+//   try {
+//     const res = await http.get('http://localhost:3220/health');
+//     console.log(`Health check: ${res.statusCode}`);
+//   } catch (error) {
+//     console.error('Health check failed:', error);
+//   }
+// });
 
 
 // Global error handler fallback

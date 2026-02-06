@@ -45,7 +45,7 @@ async function getAllForms(limit = 10, skip = 0) {
       const allForms = await FormData.find()
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit);
+        .limit(limit).populate("user", "_id fullName ")
       
       const total = await FormData.countDocuments(); // For total count
       
